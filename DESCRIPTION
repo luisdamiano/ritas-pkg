@@ -1,0 +1,21 @@
+Package: yieldMaps
+Type: Package
+Title: Title
+Version: 0.1.0
+Authors@R: c(person("Luis", "Damiano", email = "ldamiano@iastate.edu", role = c("aut", "cre", "cph"), comment = c(ORCID = "0000-0001-9107-0706")),
+  person("Jarad", "Niemi", email = "niemi@iastate.edu", role = c("aut")))
+Description: Description.
+License: GPL (>=3)
+Copyright: (c) 2019
+Encoding: UTF-8
+LazyData: true
+Depends:
+    R (>= 3.5.0),
+Imports:
+    doParallel,
+    foreach,
+    geosphere,
+    gstat,
+    rgeos,
+    sp
+RoxygenNote: 6.1.1
