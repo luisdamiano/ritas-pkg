@@ -22,6 +22,9 @@ grid as created by \code{\link{make_grid}}.}
 
 \item{colFun}{Function vector with the function that will be applied to each column.}
 }
+\value{
+A `\code{\link[sp]{SpatialPolygonsDataFrame}}` object with the aggregated polygons.
+}
 \description{
 Aggregate the attributes of the polygons grouped by some criteria.
 }

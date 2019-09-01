@@ -20,10 +20,12 @@ A vector with length equal to the number of rows in the data.frame containing th
 Apply a function for each combination of factors.
 }
 \examples{
-apply_ys(yieldExtra, function(df) {
-  bearing(df$x, df$y)
-})
-apply_ys(yieldExtra, function(df) {
-  hav_distance_km(df$x, df$y)
-})
+\dontrun{
+  apply_ys(yieldExtra, function(df) {
+    bearing(df$x, df$y)
+  })
+  apply_ys(yieldExtra, function(df) {
+    hav_distance_km(df$x, df$y)
+  })
+}
 }

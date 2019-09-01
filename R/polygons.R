@@ -201,7 +201,6 @@ reshape_polygons <- function(spdf, verbose = TRUE) {
 #' @param width Grid width in meters.
 #' @param height Grid height in meters.
 #' @return A data.frame with two columns.
-#' @examples
 make_grid_by_size <- function(spdf, width, height) {
   minmax  <- t(spdf@bbox)
 
@@ -363,11 +362,8 @@ chop_polygons <- function(spdf, gridSpdf, colIdentity, colWeight, tol = 1E-8) {
 #' @param minArea A numeric between 0 and 1 indicating the minimum proportion of area overlay between polygons in `spdf` and a pixel. Grid pixels whose area do not cover the minimum in proportion will be dropped.
 #' @param colNames Character vector with the name of the columns that will be aggregated.
 #' @param colFun Function vector with the function that will be applied to each column.
-#'
-#' @return
+#' @return A `\code{\link[sp]{SpatialPolygonsDataFrame}}` object with the aggregated polygons.
 #' @export
-#'
-#' @examples
 aggregate_polygons <- function(spdf, gridSpdf, by = NULL, minArea = 0.5, colNames, colFun) {
   # Check proportion range
   minArea <- max(min(minArea, 1), 0)

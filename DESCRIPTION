@@ -17,5 +17,8 @@ Imports:
     geosphere,
     gstat,
     rgeos,
-    sp
+    sp,
+    FRK,
+    png,
+    methods
 RoxygenNote: 6.1.1

@@ -2,7 +2,7 @@
 % Please edit documentation in R/plots.R
 \name{plot_movement}
 \alias{plot_movement}
-\title{Title}
+\title{Plot the vehicle in movement.}
 \usage{
 plot_movement(sp, endpoints, main = NA, subtitle = NA, cex = 1,
   boxes = TRUE, vertices = TRUE, locations = TRUE, arrows = TRUE,
@@ -18,6 +18,8 @@ x0, x1, y0, y1}
 
 \item{subtitle}{A character string with the plot subtitle (optional).}
 
+\item{cex}{The cex param.}
+
 \item{boxes}{If TRUE, a rectangle representing the vehicle are drawn.}
 
 \item{vertices}{If TRUE, points representing the vertices of the vehicle are drawn.}
@@ -28,14 +30,11 @@ x0, x1, y0, y1}
 
 \item{desc}{If TRUE, the bearing degrees and the distance in meters are printed.}
 
-\item{desc}{If not NULL, the position of the legend.}
+\item{legend}{If not NULL, the position of the legend.}
 }
 \value{
 Nothing.
 }
 \description{
 Plot the vehicle in movement.
-}
-\examples{
-
 }
