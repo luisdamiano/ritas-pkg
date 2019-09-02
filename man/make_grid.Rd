@@ -4,8 +4,8 @@
 \alias{make_grid}
 \title{Create a grid covering the given polygons.}
 \usage{
-make_grid(spdf, n = NULL, width = NULL, height = NULL,
-  minArea = 0.5, regular = TRUE)
+make_grid(spdf, n = NULL, width = NULL, height = NULL, minArea = 0,
+  regular = TRUE)
 }
 \arguments{
 \item{spdf}{A `\code{\link[sp]{SpatialPolygonsDataFrame}}` object with the
@@ -16,6 +16,8 @@ polygons to be covered by the grid.}
 \item{width}{The width of the grid polygons in meters.}
 
 \item{height}{The height of the grid polygons in meters.}
+
+\item{minArea}{A numeric between 0 and 1 indicating the minimum proportion of area overlay between polygons in `spdf` and a pixel. Grid pixels whose area do not cover the minimum in proportion will be dropped.}
 
 \item{regular}{If TRUE (default), the union of all the elements in the grid
 will form a regular polygons. If FALSE, grid polygons not intercepting with

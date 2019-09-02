@@ -2,7 +2,7 @@ qlog <- function(x) {
   print(sprintf("[%s] %s", Sys.time(), x))
 }
 
-run_batch <- function(df, proj4string, gridArgs, predictArgs, colIdentity,
+run_batch <- function(df, proj4string, gridArgs, predictArgs, finallyFun, colIdentity,
                       colWeight, colFun, name, resultsPath, imgPath, nCores) {
   if (!dir.exists(resultsPath))
     dir.create(resultsPath)
@@ -62,19 +62,49 @@ run_batch <- function(df, proj4string, gridArgs, predictArgs, colIdentity,
     )
 
     poly4$logMassW  <- log(poly4$massW)
-    poly4$yieldMgHa <- yield_equation_mgha(
-      poly4$massW, poly4$effectiveAreaW)
+    poly4$yieldMgHa <- yield_equation_mgha(poly4$massW, poly4$effectiveAreaW)
 
     saveRDS(poly4, poly4Out)
 
     # Predict
-    qlog(sprintf("smooth_polygons %s %s", name, key))
+    qlog(sprintf("prepare_pred_locations %s %s", name, key))
 
-    if (predictArgs$nmax < 1) # from % to # of neighbors
+    if ("nmax" %in% names(predictArgs) && predictArgs$nmax < 1) # from % to # of neighbors
         predictArgs$nmax <- round(nrow(poly4) * predictArgs$nmax)
 
+    predictArgs$spdfPred <-
+      if (is.null(predictArgs$location)) {
+        # Use aggregated pixels
+        poly4
+      } else if (is.list(predictArgs$location)) {
+        # Construct grid
+        predGrid <- do.call(make_grid, c(list(poly4), predictArgs$location))
+
+        # Add attributes
+        predGrid@data <-
+          cbind(
+            predGrid@data,
+            do.call(
+              rbind,
+              lapply(1:nrow(predGrid), function(i) {
+                colNames <- all.vars(predictArgs$formula[-2])
+                colMeans(poly4[predGrid[i, ], ]@data[, colNames, drop = FALSE])
+              })
+            )
+          )
+
+        predGrid
+      } else if ("SpatialPolygonsDataFrame" %in% class(predictArgs$location)) {
+        # Use given locations
+        predictArgs$location
+    }
+
+    qlog(sprintf("smooth_polygons %s %s", name, key))
     poly5Out <- file.path(resultsPath, sprintf("%s_smoothed_%s.RDS", name, key))
-    poly5    <- do.call(smooth_polygons, c(list(poly4), predictArgs))
+    poly5    <- do.call(
+      smooth_polygons,
+      c(list(poly4), predictArgs[-which(names(predictArgs) == "location")])
+    ) # Remove location from the arg list
 
     # Transformations
     qlog(sprintf("Transformations %s %s", name, key))
@@ -93,6 +123,10 @@ run_batch <- function(df, proj4string, gridArgs, predictArgs, colIdentity,
       1, poly5$effectiveAreaW)^2 * poly5$massKgVar
 
     saveRDS(poly5, poly5Out)
+
+    qlog(sprintf("finally %s %s", name, key))
+    if (is.function(finallyFun))
+      finallyFun(poly1, poly2, poly3, poly4, poly5, name, resultsPath, imgPath)
 
     qlog(sprintf("Done with %s %s", name, key))
   } # End foreach

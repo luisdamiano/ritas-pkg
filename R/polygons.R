@@ -227,6 +227,7 @@ make_grid_by_size <- function(spdf, width, height) {
 #' @param n The approximate number of polygons that the grid should contain.
 #' @param width The width of the grid polygons in meters.
 #' @param height The height of the grid polygons in meters.
+#' @param minArea A numeric between 0 and 1 indicating the minimum proportion of area overlay between polygons in `spdf` and a pixel. Grid pixels whose area do not cover the minimum in proportion will be dropped.
 #' @param regular If TRUE (default), the union of all the elements in the grid
 #' will form a regular polygons. If FALSE, grid polygons not intercepting with
 #' any of the input polygons will be dropped. NOTE: this is not about the
@@ -236,7 +237,7 @@ make_grid_by_size <- function(spdf, width, height) {
 #' @export
 #' @references Loosely based on
 #' https://ecosystems.psu.edu/research/labs/walter-lab/manual/chapter1/1.9-creating-a-square-polygon-grid-over-a-study-area
-make_grid <- function(spdf, n = NULL, width = NULL, height = NULL, minArea = 0.5, regular = TRUE) {
+make_grid <- function(spdf, n = NULL, width = NULL, height = NULL, minArea = 0, regular = TRUE) {
   # Check
   if (is.null(n) & is.null(width) & is.null(height))
     stop("Either `n`, or `width` and `height`, must be non-null.")
@@ -268,6 +269,19 @@ make_grid <- function(spdf, n = NULL, width = NULL, height = NULL, minArea = 0.5
 
   if (!regular)
     out <- out[spdf, ]
+
+  if (minArea > 0) {
+    spdfFix   <- rgeos::gBuffer(spdf, byid = TRUE, width = 0.1) # 10cm buffer
+    spdfInd   <- rgeos::gIsValid(spdfFix, byid = TRUE)
+    spdfUnion <- rgeos::gUnionCascaded(spdfFix[spdfInd, ])
+
+    overlap   <- sapply(1:nrow(out), function(i) {
+      get_polygon_area_m2(rgeos::gIntersection(spdfUnion, out[i, ])) /
+        get_polygon_area_m2(out[i, ])
+    })
+
+    out <- out[overlap > minArea, ]
+  }
 
   out
 }

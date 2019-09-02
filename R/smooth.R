@@ -1,24 +1,24 @@
-smooth_polygons       <- function(spdf, formula, colIdentity = NULL, nCores = 1, type = "exact", ...) {
+smooth_polygons       <- function(spdf, formula, spdfPred = NULL,
+                                  colIdentity = NULL, nCores = 1,
+                                  type = "exact", ...) {
   f <- smooth_polygons_exact
   if (type == "frk")
     f <- smooth_polygons_frk
 
-  f(spdf, formula, colIdentity, nCores, ...)
+  f(spdf, formula, spdfPred, colIdentity, nCores, ...)
 }
 
-smooth_polygons_exact <- function(spdf, formula, colIdentity = NULL, nCores = 1, ...) {
+smooth_polygons_exact <- function(spdf, formula, spdfPred = NULL,
+                                  colIdentity = NULL, nCores = 1, ...) {
+  if (is.null(spdfPred))
+    spdfPred <- spdf
+
   str  <- sp::proj4string(spdf)
-  sp::proj4string(spdf) <- sp::CRS(as.character(NA))
+  sp::proj4string(spdf)     <- sp::CRS(as.character(NA))
+  sp::proj4string(spdfPred) <- sp::CRS(as.character(NA))
 
   # Fit variogram
   vgm  <- gstat::variogram(formula, spdf)
-  # fit  <- NULL
-  # optimize(function(x) {
-  #   attr(
-  #     fit <<- gstat::fit.variogram(vgm, gstat::vgm(NA, "Mat", NA, NA, kappa = x)),
-  #     "SSErr"
-  #   )
-  # }, c(0.01, 5))
   fit  <- gstat::fit.variogram(
     vgm,
     model      = gstat::vgm(NA, "Mat", NA, NA),
@@ -28,9 +28,9 @@ smooth_polygons_exact <- function(spdf, formula, colIdentity = NULL, nCores = 1,
   )
 
   # Split into groups
-  nRow  <- nrow(spdf)
+  nRow  <- nrow(spdfPred)
   ind   <- rep(1:nCores, each = ceiling(nRow / nCores))[1:nRow]
-  spdfs <- sp::split(spdf, ind)
+  spdfs <- sp::split(spdfPred, ind)
 
   # Start parallelization
   cl <- parallel::makeCluster(nCores, outfile = "")
@@ -62,15 +62,19 @@ smooth_polygons_exact <- function(spdf, formula, colIdentity = NULL, nCores = 1,
   pred
 }
 
-smooth_polygons_frk   <- function(spdf, formula, colIdentity = NULL, nCores = 1, ...) {
+smooth_polygons_frk   <- function(spdf, formula, spdfPred = NULL,
+                                  colIdentity = NULL, nCores = 1, ...) {
   rhsVars  <- all.vars(formula[-2])
 
   # Create data spdf (remove covariates)
   spdfData <- spdf
   spdfData@data[, rhsVars]  <- NULL
 
-  # Create prediction location spdf (remove others)
-  spdfBAU  <- spdf
+  # Create prediction location spdfPred (remove others)
+  if (is.null(spdfPred))
+    spdfPred <- spdf
+
+  spdfBAU  <- spdfPred
   spdfBAU@data[, !(colnames(spdfBAU@data) %in% rhsVars)] <- NULL
 
   # Fit & predict
@@ -79,10 +83,12 @@ smooth_polygons_frk   <- function(spdf, formula, colIdentity = NULL, nCores = 1,
     data      = spdfData,
     BAUs      = spdfBAU,
     vgm_model = gstat::vgm(NA, "Mat", NA, NA),
-    regular   = 1, # irregularly placed basis functions
+    regular   = 0, # 0 = irregularly placed basis functions
+    # Go irregular as suggested in FRK vignette.
     ...
   )
 
+  # Use obs_fs = FALSE: see analysisFineScaleVariation.R (article package)
   pred     <- FRK::predict(fit, obs_fs = FALSE)
 
   # Rename to homogenize with other smooth function
@@ -91,8 +97,20 @@ smooth_polygons_frk   <- function(spdf, formula, colIdentity = NULL, nCores = 1,
   pred@data[, "sd"] <- NULL
 
   # Keep columns from aggregated spdf
+  # if (!is.null(colIdentity))
+  #   pred@data[, colIdentity] <- spdf@data[, colIdentity]
+
   if (!is.null(colIdentity))
-    pred@data[, colIdentity] <- spdf@data[, colIdentity]
+    pred@data <-
+      cbind(
+        pred@data,
+        do.call(
+          rbind,
+          lapply(1:nrow(pred), function(i) {
+            colMeans(spdf[pred[i, ], ]@data[, colIdentity, drop = FALSE])
+          })
+        )
+      )
 
   pred
 }
