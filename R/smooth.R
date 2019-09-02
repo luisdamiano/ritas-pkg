@@ -78,7 +78,7 @@ smooth_polygons_frk   <- function(spdf, formula, spdfPred = NULL,
   spdfBAU@data[, !(colnames(spdfBAU@data) %in% rhsVars)] <- NULL
 
   # Fit & predict
-  FRK::opts_FRK$set("parallel", nCores)
+  FRK::opts_FRK$set("parallel", as.integer(nCores))
   fit      <- FRK::FRK(
     f         = formula,
     data      = spdfData,

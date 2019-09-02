@@ -77,9 +77,11 @@ run_batch <- function(df, proj4string, gridArgs, predictArgs, finallyFun, colIde
         # Use aggregated pixels
         poly4
       } else if (is.list(predictArgs$location)) {
+        qlog(sprintf("create_pred_grid %s %s", name, key))
         # Construct grid
         predGrid <- do.call(make_grid, c(list(poly4), predictArgs$location))
 
+        qlog(sprintf("create_pred_covariates %s %s", name, key))
         # Add attributes
         predGrid@data <-
           cbind(
