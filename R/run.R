@@ -79,21 +79,22 @@ run_batch <- function(df, proj4string, gridArgs, predictArgs, finallyFun, colIde
       } else if (is.list(predictArgs$location)) {
         qlog(sprintf("create_pred_grid %s %s", name, key))
         # Construct grid
-        predGrid <- do.call(make_grid, c(list(poly4), predictArgs$location))
+        predGrid      <- do.call(
+          make_grid, c(list(poly4), predictArgs$location)
+        )
 
         qlog(sprintf("create_pred_covariates %s %s", name, key))
         # Add attributes
-        predGrid@data <-
-          cbind(
-            predGrid@data,
-            do.call(
-              rbind,
-              lapply(1:nrow(predGrid), function(i) {
-                colNames <- all.vars(predictArgs$formula[-2])
-                colMeans(poly4[predGrid[i, ], ]@data[, colNames, drop = FALSE])
-              })
-            )
-          )
+        colNames      <- all.vars(predictArgs$formula[-2])
+        predGrid@data <- cbind(
+          predGrid@data,
+          aggregate(
+            x            = poly4[, colNames],
+            by           = predGrid,
+            FUN          = mean,
+            areaWeighted = FALSE
+          )@data
+        )
 
         predGrid
       } else if ("SpatialPolygonsDataFrame" %in% class(predictArgs$location)) {
