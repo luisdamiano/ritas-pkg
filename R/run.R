@@ -30,6 +30,7 @@ run_batch <- function(df, proj4string, gridArgs, predictArgs, finallyFun, colIde
     if (nCores == 1) {
       foreach::`%do%`
     } else {
+      # foreach::`%do%`
       foreach::`%dopar%`
     }
 
@@ -69,23 +70,47 @@ run_batch <- function(df, proj4string, gridArgs, predictArgs, finallyFun, colIde
     # Predict
     qlog(sprintf("prepare_pred_locations %s %s", name, key))
 
-    if ("nmax" %in% names(predictArgs) && predictArgs$nmax < 1) # from % to # of neighbors
-        predictArgs$nmax <- round(nrow(poly4) * predictArgs$nmax)
+    predictArgsLocal <- predictArgs
+    if ("nmax" %in% names(predictArgsLocal) && predictArgsLocal$nmax < 1) # from % to # of neighbors
+        predictArgsLocal$nmax <- round(nrow(poly4) * predictArgsLocal$nmax)
 
-    predictArgs$spdfPred <-
-      if (is.null(predictArgs$location)) {
+    # What to smooth
+    predictArgsLocal$spdf <-
+      if (is.null(predictArgsLocal$spdf) || predictArgsLocal$spdf == "aggregated") {
+        # Smooth aggregated pixels
+        poly4
+      } else if (predictArgsLocal$spdf == "original") {
+        # Ugly hack
+        poly1$effectiveArea  <- get_polygon_area_m2(poly1)
+
+        # colnames(poly1@data) <- paste(colnames(poly1@data), "W", sep = "")
+        X <- poly1@data
+        colnames(X) <- paste(colnames(X), "W", sep = "")
+        poly1@data <- cbind(poly1@data, X)
+
+        poly1
+      } else {
+        stop("I can only smooth the `aggregated` pixels or the `original` dataset.")
+      }
+
+    # Where to smooth at
+    predictArgsLocal$spdfPred <-
+      if (is.null(predictArgsLocal$spdfPred)) {
         # Use aggregated pixels
         poly4
-      } else if (is.list(predictArgs$location)) {
+      } else if (is.list(predictArgsLocal$spdfPred)) {
         qlog(sprintf("create_pred_grid %s %s", name, key))
         # Construct grid
         predGrid      <- do.call(
-          make_grid, c(list(poly4), predictArgs$location)
+          make_grid, c(list(poly4), predictArgsLocal$spdfPred)
         )
 
         qlog(sprintf("create_pred_covariates %s %s", name, key))
-        # Add attributes
-        colNames      <- all.vars(predictArgs$formula[-2])
+        # Add attributes (if none, aggregate something that won't be used)
+        colNames      <- all.vars(predictArgsLocal$formula[-2])
+        if (!length(colNames))
+          colNames <- colnames(poly4@data)[1]
+
         predGrid@data <- cbind(
           predGrid@data,
           aggregate(
@@ -96,18 +121,19 @@ run_batch <- function(df, proj4string, gridArgs, predictArgs, finallyFun, colIde
           )@data
         )
 
-        predGrid
-      } else if ("SpatialPolygonsDataFrame" %in% class(predictArgs$location)) {
+        # Return only those pixels that overlay with the original sample
+        predGrid[poly1, ]
+      } else if ("SpatialPolygonsDataFrame" %in% class(predictArgsLocal$spdfPred)) {
         # Use given locations
-        predictArgs$location
-    }
+        predictArgsLocal$spdfPred
+      }
 
     qlog(sprintf("smooth_polygons %s %s", name, key))
     poly5Out <- file.path(resultsPath, sprintf("%s_smoothed_%s.RDS", name, key))
     poly5    <- do.call(
       smooth_polygons,
-      c(list(poly4), predictArgs[-which(names(predictArgs) == "location")])
-    ) # Remove location from the arg list
+      predictArgsLocal
+    )
 
     # Transformations
     qlog(sprintf("Transformations %s %s", name, key))

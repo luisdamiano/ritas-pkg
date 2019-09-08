@@ -122,7 +122,8 @@ add_legend <- function(spdf, colName, nGrad = 20, nTicks = 5, main = "",
                        colFunInv = interpolate_colors_empirical_inv,
                        colDist   = spdf@data[, colName]) {
   # Extract value
-  x        <- spdf@data[, colName]
+  # x        <- spdf@data[, colName]
+  x        <- colDist
 
   # Create gradient
   gradPos  <- seq(from = 0, to = 1, by = 1 / nGrad)

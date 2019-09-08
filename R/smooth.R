@@ -39,6 +39,7 @@ smooth_polygons_exact <- function(spdf, formula, spdfPred = NULL,
     if (nCores == 1) {
       foreach::`%do%`
     } else {
+      # foreach::`%do%`
       foreach::`%dopar%`
     }
   l <- foreach::foreach(x = spdfs, .packages = c("sp", "gstat")) %dopar% {
@@ -54,35 +55,44 @@ smooth_polygons_exact <- function(spdf, formula, spdfPred = NULL,
   parallel::stopCluster(cl)
 
   pred <- do.call(rbind, l)
+  sp::proj4string(spdf) <- sp::CRS(str)
   sp::proj4string(pred) <- sp::CRS(str)
 
   if (!is.null(colIdentity))
-    pred@data[, colIdentity] <- spdf@data[, colIdentity]
+    pred@data[, colIdentity] <- aggregate(spdf, pred, FUN = mean)@data[, colIdentity]
+    # pred@data[, colIdentity] <- spdf@data[, colIdentity]
 
   pred
 }
 
 smooth_polygons_frk   <- function(spdf, formula, spdfPred = NULL,
                                   colIdentity = NULL, nCores = 1, ...) {
-  rhsVars  <- all.vars(formula[-2])
-
-  # Create data spdf (remove covariates)
+  # Create locations
   spdfData <- spdf
-  spdfData@data[, rhsVars]  <- NULL
+  spdfBAUs <- spdfData
 
-  # Create prediction location spdfPred (remove others)
   if (is.null(spdfPred))
     spdfPred <- spdf
 
-  spdfBAU  <- spdfPred
-  spdfBAU@data[, !(colnames(spdfBAU@data) %in% rhsVars)] <- NULL
+  # Create data spdf (remove covariates)
+  lhsVars    <- all.vars(formula[[2]])
+  rhsVars    <- all.vars(formula[[3]])
+
+  if (length(lhsVars))
+    spdfData@data[, !(colnames(spdfData@data) %in% lhsVars)] <- NULL
+
+  if (length(rhsVars)) {
+    spdfBAUs@data[, !(colnames(spdfBAUs@data) %in% rhsVars)] <- NULL
+  } else {
+    colnames(spdfBAUs@data) <- sprintf("%strash", colnames(spdfBAUs@data))
+  }
 
   # Fit & predict
   FRK::opts_FRK$set("parallel", as.integer(nCores))
   fit      <- FRK::FRK(
     f         = formula,
     data      = spdfData,
-    BAUs      = spdfBAU,
+    BAUs      = spdfBAUs,
     vgm_model = gstat::vgm(NA, "Mat", NA, NA),
     regular   = 0, # 0 = irregularly placed basis functions
     # Go irregular as suggested in FRK vignette.
@@ -90,7 +100,7 @@ smooth_polygons_frk   <- function(spdf, formula, spdfPred = NULL,
   )
 
   # Use obs_fs = FALSE: see analysisFineScaleVariation.R (article package)
-  pred     <- FRK::predict(fit, obs_fs = FALSE)
+  pred     <- FRK::predict(fit, newdata = spdfPred, obs_fs = FALSE)
 
   # Rename to homogenize with other smooth function
   colnames(pred@data)[which(colnames(pred@data) == "mu") ] <- "var1.pred"
@@ -98,20 +108,8 @@ smooth_polygons_frk   <- function(spdf, formula, spdfPred = NULL,
   pred@data[, "sd"] <- NULL
 
   # Keep columns from aggregated spdf
-  # if (!is.null(colIdentity))
-  #   pred@data[, colIdentity] <- spdf@data[, colIdentity]
-
   if (!is.null(colIdentity))
-    pred@data <-
-      cbind(
-        pred@data,
-        do.call(
-          rbind,
-          lapply(1:nrow(pred), function(i) {
-            colMeans(spdf[pred[i, ], ]@data[, colIdentity, drop = FALSE])
-          })
-        )
-      )
+    pred@data[, colIdentity] <- aggregate(spdf, pred, FUN = mean)@data[, colIdentity]
 
   pred
 }
