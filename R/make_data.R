@@ -99,9 +99,9 @@ make_data <- function() {
   yield          <- yield[yield$site != "Remove", ]
 
   # Time-ordered features should be run per yield and site
-  yield$bearing   <- apply_ys(yield, function(df) {
-    bearing(df$longitude, df$latitude) }
-  )
+  # yield$bearing   <- apply_ys(yield, function(df) {
+  #   bearing(df$longitude, df$latitude) }
+  # )
   yield$haversine <- apply_ys(yield, function(df) {
     hav_distance_m(df$longitude, df$latitude) }
   )

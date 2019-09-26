@@ -253,7 +253,7 @@ plot_movement <- function(sp, endpoints, main = NA, subtitle = NA, cex = 1, boxe
     xlab = "",
     ylab = "",
     type = "p",
-    pch  = 21,
+    pch  = 23,
     bg   = if (vertices) "darkgreen" else NA,
     col  = if (vertices) "darkgreen" else NA,
     mgp  = c(2.5, 1, 0), # Location of axis lab, tick lab, tick marks.
@@ -344,7 +344,7 @@ plot_movement <- function(sp, endpoints, main = NA, subtitle = NA, cex = 1, boxe
       fill   = c(NA                 , NA                 , adjustcolor("lightgreen", alpha.f = 0.2), NA),
       border = c(NA                 , NA                 , "darkgreen"      , NA                   ),
       lty    = c(NA                 , NA                 , NA               , 1                    ),
-      pch    = c(21                 , 21                 , NA               , NA                   ),
+      pch    = c(21                 , 23                 , NA               , NA                   ),
       pt.bg  = c("black"            , "darkgreen"        , NA               , "black"              ),
       bty    = "n",
       seg.len = 0.5,
