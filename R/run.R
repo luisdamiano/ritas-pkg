@@ -3,7 +3,7 @@ qlog <- function(x) {
 }
 
 run_batch <- function(df, proj4string, gridArgs, predictArgs, finallyFun, colIdentity,
-                      colWeight, colFun, name, resultsPath, imgPath, nCores) {
+                      colWeight, colFun, name, resultsPath, imgPath, nCores, filterOut = NULL) {
   if (!dir.exists(resultsPath))
     dir.create(resultsPath)
 
@@ -16,6 +16,12 @@ run_batch <- function(df, proj4string, gridArgs, predictArgs, finallyFun, colIde
   poly1Out <- file.path(resultsPath, sprintf("%s_vehicle.RDS", name))
   poly1    <- make_vehicle_polygons(df, proj4string)
   saveRDS(poly1, poly1Out)
+
+  if (!is.null(filterOut)) {
+    poly1Out <- file.path(resultsPath, sprintf("%s_vehicle_filtered.RDS", name))
+    poly1    <- poly1[-filterOut, ]
+    saveRDS(poly1, poly1Out)
+  }
 
   qlog(sprintf("reshape_polygons %s", name))
   poly2Out <- file.path(resultsPath, sprintf("%s_reshaped.RDS", name))
