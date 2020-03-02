@@ -25,7 +25,7 @@ make_data <- function() {
   yield$y          <- xyUTM[, 2]
 
   # Fix force timelapse
-  yield$timelapse  <- round(yield$distance / (yield$speed / 60 / 60 * 5280), 1)
+  # yield$timelapse  <- round(yield$distance / (yield$speed / 60 / 60 * 5280), 1)
 
   # Compute yield
   yield$yieldDryBuAc   <- yield_equation(
