@@ -4,7 +4,7 @@
 \alias{aggregate_polygons}
 \title{Aggregate the attributes of the polygons grouped by some criteria.}
 \usage{
-aggregate_polygons(spdf, gridSpdf, by = NULL, minArea = 0.5, colNames,
+aggregate_polygons(spdf, gridSpdf, by = NULL, minArea = 0, colNames,
   colFun)
 }
 \arguments{

@@ -378,7 +378,7 @@ chop_polygons <- function(spdf, gridSpdf, colIdentity, colWeight, tol = 1E-8) {
 #' @param colFun Function vector with the function that will be applied to each column.
 #' @return A `\code{\link[sp]{SpatialPolygonsDataFrame}}` object with the aggregated polygons.
 #' @export
-aggregate_polygons <- function(spdf, gridSpdf, by = NULL, minArea = 0.5, colNames, colFun) {
+aggregate_polygons <- function(spdf, gridSpdf, by = NULL, minArea = 0, colNames, colFun) {
   # Check proportion range
   minArea <- max(min(minArea, 1), 0)
 
