@@ -378,12 +378,13 @@ chop_polygons <- function(spdf, gridSpdf, colIdentity, colWeight, tol = 1E-8) {
 #' @param colFun Function vector with the function that will be applied to each column.
 #' @return A `\code{\link[sp]{SpatialPolygonsDataFrame}}` object with the aggregated polygons.
 #' @export
+#' TODO: Add colUpscale as an argument
 aggregate_polygons <- function(spdf, gridSpdf, by = NULL, minArea = 0, colNames, colFun) {
   # Check proportion range
   minArea <- max(min(minArea, 1), 0)
 
   # Create resulting data.frame
-  l     <- lapply(
+  l    <- lapply(
     1:length(colNames),
     function(i) {
       tapply(spdf@data[, colNames[i]], spdf@data[, by], colFun[[i]])
@@ -391,6 +392,16 @@ aggregate_polygons <- function(spdf, gridSpdf, by = NULL, minArea = 0, colNames,
   )
   outDF <- data.frame(l)
   colnames(outDF) <- colNames
+
+  # Add upscaled values
+  propUp <- get_polygon_area_m2(gridSpdf) / outDF$effectiveAreaW
+  propDF <- outDF * propUp
+  colnames(propDF) <- sprintf("%sUp", colNames)
+
+  outDF <- cbind(
+    outDF,
+    propDF
+  )
 
   # Drop unmatched pixels
   gridId <- get_polygon_id(gridSpdf)

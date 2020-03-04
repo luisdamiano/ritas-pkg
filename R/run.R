@@ -68,8 +68,9 @@ run_batch <- function(df, proj4string, gridArgs, predictArgs, finallyFun, colIde
       colFun   = colFun
     )
 
-    poly4$logMassW  <- log(poly4$massW)
-    poly4$yieldMgHa <- yield_equation_mgha(poly4$massW, poly4$effectiveAreaW)
+    poly4$logMassW   <- log(poly4$massW)
+    poly4$logMassWUp <- log(poly4$massWUp)
+    poly4$yieldMgHa  <- yield_equation_mgha(poly4$massW, poly4$effectiveAreaW)
 
     saveRDS(poly4, poly4Out)
 
@@ -86,6 +87,7 @@ run_batch <- function(df, proj4string, gridArgs, predictArgs, finallyFun, colIde
         # Smooth aggregated pixels
         poly4
       } else if (predictArgsLocal$spdf == "original") {
+        # Smooth data as collected
         # Ugly hack
         poly1$effectiveArea  <- get_polygon_area_m2(poly1)
 
@@ -153,9 +155,9 @@ run_batch <- function(df, proj4string, gridArgs, predictArgs, finallyFun, colIde
       poly5$logMassKgMean, poly5$logMassKgVar, "var")
 
     poly5$yieldMgHaMean <- yield_equation_mgha(
-      poly5$massKgMean, poly5$effectiveAreaW)
+      poly5$massKgMean, poly5$effectiveAreaWUp)
     poly5$yieldMgHaVar  <- yield_equation_mgha(
-      1, poly5$effectiveAreaW)^2 * poly5$massKgVar
+      1, poly5$effectiveAreaWUp)^2 * poly5$massKgVar
 
     saveRDS(poly5, poly5Out)
 
