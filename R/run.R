@@ -18,6 +18,7 @@ run_batch <- function(df, proj4string, gridArgs, predictArgs, finallyFun, colIde
   saveRDS(poly1, poly1Out)
 
   if (!is.null(filterOut)) {
+    qlog(sprintf("make_vehicle_polygons %s Filtering out %d polys", name, length(filterOut)))
     poly1Out <- file.path(resultsPath, sprintf("%s_vehicle_filtered.RDS", name))
     poly1    <- poly1[-filterOut, ]
     saveRDS(poly1, poly1Out)
