@@ -102,9 +102,9 @@ make_data <- function() {
   # yield$bearing   <- apply_ys(yield, function(df) {
   #   bearing(df$longitude, df$latitude) }
   # )
-  yield$haversine <- apply_ys(yield, function(df) {
-    hav_distance_m(df$longitude, df$latitude) }
-  )
+  # yield$haversine <- apply_ys(yield, function(df) {
+  #   hav_distance_m(df$longitude, df$latitude) }
+  # )
 
   # Save
   save(yield, file = "./data/yield.rda", version = 2)
