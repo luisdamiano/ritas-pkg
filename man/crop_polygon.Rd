@@ -7,12 +7,14 @@
 crop_polygon(spFrom, spTo)
 }
 \arguments{
-\item{spFrom}{A \code{\link[sp]{Polygon}} from which `polyTo` will be removed.}
+\item{spFrom}{A \code{\link[sp]{Polygon}} from which `polyTo` will be
+removed.}
 
 \item{spTo}{A \code{\link[sp]{Polygon}} that will be cropped out of `spFrom`.}
 }
 \value{
-A \code{\link[sp]{Polygon}} object with the region of `spFrom` that is not within `spTo`.
+A \code{\link[sp]{Polygon}} object with the region of `spFrom` that
+  is not within `spTo`.
 }
 \description{
 Crop out one polygone from another.

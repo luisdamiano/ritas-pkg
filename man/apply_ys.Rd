@@ -4,17 +4,19 @@
 \alias{apply_ys}
 \title{Apply a function for each combination of factors.}
 \usage{
-apply_ys(X, FUN, by = c("year", "site"))
+apply_ys(X, FUN, by = c("site", "year"))
 }
 \arguments{
 \item{X}{A data.frame with named columns including at least those in `by`.}
 
 \item{FUN}{A function expecting a data.frame and returning an atom.}
 
-\item{by}{A vector of character strings with the names of the columns used to split the dataset.}
+\item{by}{A vector of character strings with the names of the columns used to
+split the dataset.}
 }
 \value{
-A vector with length equal to the number of rows in the data.frame containing the values returned by `FUN`.
+A vector with length equal to the number of rows in the data.frame
+  containing the values returned by `FUN`.
 }
 \description{
 Apply a function for each combination of factors.

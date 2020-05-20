@@ -4,9 +4,11 @@
 #'
 #' @param x A numeric vector with the latitude of the vehicle locations.
 #' @param y A numeric vector with the longitude of the vehicle locations
-#' @param w A numeric vector with the width of the vehicle IN METERS. Again, `w` MUST BE IN METERS.
-#' @return A matrix with eight columns with the coordinates of the four vertices,
-#' where 11 and 12 represent the points closer to the initial location and 21 and 22 represent the pointers closer to the final location.
+#' @param w A numeric vector with the width of the vehicle IN METERS. Again, `w`
+#'   MUST BE IN METERS.
+#' @return A matrix with eight columns with the coordinates of the four
+#'   vertices, where 11 and 12 represent the points closer to the initial
+#'   location and 21 and 22 represent the pointers closer to the final location.
 #' @note `w` MUST BE IN METERS.
 make_bounding_box <- function(x, y, w) {
   # Prepare centroids
@@ -56,17 +58,26 @@ make_bounding_box <- function(x, y, w) {
 #' @export
 #' @note `swath` MUST BE IN METERS.
 make_vehicle_polygons <- function(df, proj4string) {
-  # Checks
+  # Verify inputs
   if (!is.data.frame(df))
-    stop("The input `x` must be a data.frame.")
+    stop("The input `df` must be a data.frame.")
 
   if (!all(c("x", "y", "swath") %in% colnames(df)))
     stop("The input `x` must be a data.frame with columns `x`, `y`, and `swath`.")
 
+  tryCatch(
+    expr  = sp::CRS(proj4string),
+    error = function(e) { stop(
+        sprintf(
+          "Invalid project4string: %s\nMessage:%s", proj4string, e$message
+        )
+    )}
+  )
+
   # Compute vertices of the rectangles for each coordinate
   boxes <- apply_ys(df, function(xi) {
     make_bounding_box(xi$x, xi$y, xi$swath)
-  })
+  }, by = c("site", "year"))
 
   # Create a list with one Polygon per bounding box
   NAs <- apply(boxes, 1, anyNA)
@@ -114,9 +125,11 @@ make_vehicle_polygons <- function(df, proj4string) {
 
 #' Crop out one polygone from another.
 #'
-#' @param spFrom A \code{\link[sp]{Polygon}} from which `polyTo` will be removed.
+#' @param spFrom A \code{\link[sp]{Polygon}} from which `polyTo` will be
+#'   removed.
 #' @param spTo A \code{\link[sp]{Polygon}} that will be cropped out of `spFrom`.
-#' @return A \code{\link[sp]{Polygon}} object with the region of `spFrom` that is not within `spTo`.
+#' @return A \code{\link[sp]{Polygon}} object with the region of `spFrom` that
+#'   is not within `spTo`.
 crop_polygon <- function(spFrom, spTo) {
   if (!rgeos::gIsValid(spFrom, byid = TRUE))
     spFrom <- rgeos::gBuffer(spFrom, width = 0, byid = TRUE)
@@ -157,7 +170,7 @@ reshape_polygons <- function(spdf, verbose = TRUE) {
       if (verbose)
         cat(
           sprintf(
-            "\r[% 4i/% 4i |% 6.1f%% |% 5.2f minutes] Filtering out %i overlapping polygons in this step.",
+            "\r[% 4i/% 4i |% 6.1f%% |% 5.2f minutes] Filtering out %3d overlapping polygons in this step.",
             i, nLast, 100 * i / nLast,
             difftime(Sys.time(), tInit, units = "mins"), length(overPos)
           )
@@ -223,21 +236,24 @@ make_grid_by_size <- function(spdf, width, height) {
 #' Note that `width` and `height` take priority over `n` if all are non-null.
 #'
 #' @param spdf A `\code{\link[sp]{SpatialPolygonsDataFrame}}` object with the
-#' polygons to be covered by the grid.
+#'   polygons to be covered by the grid.
 #' @param n The approximate number of polygons that the grid should contain.
 #' @param width The width of the grid polygons in meters.
 #' @param height The height of the grid polygons in meters.
-#' @param minArea A numeric between 0 and 1 indicating the minimum proportion of area overlay between polygons in `spdf` and a pixel. Grid pixels whose area do not cover the minimum in proportion will be dropped.
+#' @param minArea A numeric between 0 and 1 indicating the minimum proportion of
+#'   area overlay between polygons in `spdf` and a pixel. Grid pixels whose area
+#'   do not cover the minimum in proportion will be dropped.
 #' @param regular If TRUE (default), the union of all the elements in the grid
-#' will form a regular polygons. If FALSE, grid polygons not intercepting with
-#' any of the input polygons will be dropped. NOTE: this is not about the
-#' elements of of the grid having a regular shape!
+#'   will form a regular polygons. If FALSE, grid polygons not intercepting with
+#'   any of the input polygons will be dropped. NOTE: this is not about the
+#'   elements of of the grid having a regular shape!
 #' @return A `\code{\link[sp]{SpatialPolygonsDataFrame}}` object with the
-#' polygons conforming the grid.
+#'   polygons conforming the grid.
 #' @export
 #' @references Loosely based on
 #' https://ecosystems.psu.edu/research/labs/walter-lab/manual/chapter1/1.9-creating-a-square-polygon-grid-over-a-study-area
-make_grid <- function(spdf, n = NULL, width = NULL, height = NULL, minArea = 0, regular = TRUE) {
+make_grid <-
+  function(spdf, n = NULL, width = NULL, height = NULL, minArea = 0, regular = TRUE) {
   # Check
   if (is.null(n) & is.null(width) & is.null(height))
     stop("Either `n`, or `width` and `height`, must be non-null.")
@@ -293,17 +309,17 @@ make_grid <- function(spdf, n = NULL, width = NULL, height = NULL, minArea = 0, 
 #' Chops many polygons into many finer pieces by ovelaying a grid.
 #'
 #' @param spdf A `\code{\link[sp]{SpatialPolygonsDataFrame}}` object with the
-#' polygons to be cropped.
-#' @param gridSpdf A `\code{\link[sp]{SpatialPolygonsDataFrame}}` object with the
-#' grid as created by \code{\link{make_grid}}.
-#' @param colIdentity A character vector with the name of the columns of
-#' `spdf` that should be passed through without modification.
-#' @param colWeight A character vector with the name of the columns of
-#' `spdf` that should be multiplied by the areal weight (apportioning).
+#'   polygons to be cropped.
+#' @param gridSpdf A `\code{\link[sp]{SpatialPolygonsDataFrame}}` object with
+#'   the grid as created by \code{\link{make_grid}}.
+#' @param colIdentity A character vector with the name of the columns of `spdf`
+#'   that should be passed through without modification.
+#' @param colWeight A character vector with the name of the columns of `spdf`
+#'   that should be multiplied by the areal weight (apportioning).
 #' @param tol The tolerance value for simplifying the polygons before cropping
-#' (see \code{\link[sp]{gSimplify}}).
+#'   (see \code{\link[sp]{gSimplify}}).
 #' @return A `\code{\link[sp]{SpatialPolygons}}` list with the resulting
-#' polygons.
+#'   polygons.
 #' @export
 chop_polygons <- function(spdf, gridSpdf, colIdentity, colWeight, tol = 1E-8) {
   overlays <- sp::over(spdf, gridSpdf, returnList = TRUE)
@@ -347,7 +363,8 @@ chop_polygons <- function(spdf, gridSpdf, colIdentity, colWeight, tol = 1E-8) {
             originalPolyID,
             gridPolyID,
             colIdentityDF,
-            colWADF
+            colWADF,
+            areaWeight = weight
           )
           rownames(outDF) <- outId
 
@@ -369,17 +386,23 @@ chop_polygons <- function(spdf, gridSpdf, colIdentity, colWeight, tol = 1E-8) {
 #' Aggregate the attributes of the polygons grouped by some criteria.
 #'
 #' @param spdf A `\code{\link[sp]{SpatialPolygonsDataFrame}}` object with the
-#' polygons to be cropped.
-#' @param gridSpdf A `\code{\link[sp]{SpatialPolygonsDataFrame}}` object with the
-#' grid as created by \code{\link{make_grid}}.
-#' @param by Character vector with the name of the columns used to group polygons.
-#' @param minArea A numeric between 0 and 1 indicating the minimum proportion of area overlay between polygons in `spdf` and a pixel. Grid pixels whose area do not cover the minimum in proportion will be dropped.
-#' @param colNames Character vector with the name of the columns that will be aggregated.
-#' @param colFun Function vector with the function that will be applied to each column.
-#' @return A `\code{\link[sp]{SpatialPolygonsDataFrame}}` object with the aggregated polygons.
-#' @export
-#' TODO: Add colUpscale as an argument
-aggregate_polygons <- function(spdf, gridSpdf, by = NULL, minArea = 0, colNames, colFun) {
+#'   polygons to be cropped.
+#' @param gridSpdf A `\code{\link[sp]{SpatialPolygonsDataFrame}}` object with
+#'   the grid as created by \code{\link{make_grid}}.
+#' @param by Character vector with the name of the columns used to group
+#'   polygons.
+#' @param minArea A numeric between 0 and 1 indicating the minimum proportion of
+#'   area overlay between polygons in `spdf` and a pixel. Grid pixels whose area
+#'   do not cover the minimum in proportion will be dropped.
+#' @param colNames Character vector with the name of the columns that will be
+#'   aggregated.
+#' @param colFun Function vector with the function that will be applied to each
+#'   column.
+#' @return A `\code{\link[sp]{SpatialPolygonsDataFrame}}` object with the
+#'   aggregated polygons.
+#' @export TODO: Add colUpscale as an argument
+aggregate_polygons <-
+  function(spdf, gridSpdf, by = NULL, minArea = 0, colNames, colFun) {
   # Check proportion range
   minArea <- max(min(minArea, 1), 0)
 

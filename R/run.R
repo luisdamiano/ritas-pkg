@@ -1,66 +1,193 @@
-qlog <- function(x) {
-  print(sprintf("[%s] %s", Sys.time(), x))
-}
+ritas <-
+  function(df, proj4string, site = "unknrownSite", year = "unknownYear",
+           resolution = 1, nmax = 1, nCores = 1, filterOut = NULL,
+           predictAt = NULL, folder = ".") {
+    # Verify inputs
+    if (!("data.frame" %in% class(df)))
+      stop("The `df` argument must be a data frame")
 
-run_batch <- function(df, proj4string, gridArgs, predictArgs, finallyFun, colIdentity,
-                      colWeight, colFun, name, resultsPath, imgPath, nCores, filterOut = NULL) {
+    if (!all(c("x", "y", "swath", "mass") %in% colnames(df)))
+      stop("The `df` data frame must have columns `x`, `y`, `swath`, and `mass`")
+
+    if (!grep(glob2rx("*utm*"), tolower(proj4string)))
+      stop("Coordinates should be in UTM format")
+
+    # Autocomplete site and year if not present
+    if (!("site" %in% colnames(df))) {
+      warnStr <- "The `df` data frame has no `site` column, autocompleted with %s"
+      logging::logwarn(warnStr, site)
+
+      df$site <- site
+    }
+
+    if (!("year" %in% colnames(df))) {
+      warnStr <- "The `df` data frame has no `year` column, autocompleted with %s"
+      logging::logwarn(warnStr, year)
+
+      df$year <- year
+    }
+
+    if (!("record" %in% colnames(df))) {
+      warnStr <- "The `df` data frame has no `record` column, observation are assumed to be in temporal order"
+      logging::logwarn(warnStr)
+
+      df$record <- 1:nrow(df)
+    }
+
+    # Default values
+    basePath    <- file.path(folder, site, year)
+    colIdentity <- c(
+      colnames(df)[!(colnames(df) %in% c("x", "y"))], # All columns except x, y
+      "effectiveArea" # plus `effectiveArea`, which is created during processing
+    )
+
+    run_batch(
+      df = df,
+      proj4string = proj4string,
+      gridArgs = lapply(resolution, function(r) {
+        list(width = as.numeric(r), height = as.numeric(r), regular = FALSE)
+      }),
+      colIdentity = colIdentity,
+      colWeight = c("mass", "effectiveArea"),
+      colFun = c(sum, sum),
+      predictArgs = list(
+        spdf     = NULL,
+        formula  = log(massWUp) ~ 1,
+        spdfPred = NULL,
+        nmax     = nmax,
+        nCores   = 1,
+        colIdentity =
+          c("massW", "effectiveAreaW", "massWUp", "effectiveAreaWUp")
+      ),
+      name        = tolower(sprintf("%s_%s", site, year)),
+      resultsPath = file.path(basePath, "obj"),
+      imgPath     = file.path(basePath, "img"),
+      logPath     = basePath,
+      nCores      = nCores,
+      finallyFun  = NULL,
+      # finallyFun  = make_maps,
+      filterOut   = filterOut
+    )
+  }
+
+run_batch <-
+  function(df, proj4string, gridArgs, predictArgs, finallyFun, colIdentity,
+           colWeight, colFun, name, resultsPath, imgPath, logPath = NULL,
+           nCores, filterOut = NULL) {
+  # Create directories if they don't exist
+  if (!is.null(logPath))
+    logging::addHandler(
+      logging::writeToFile,
+      file = file.path(logPath, "log.txt"),
+      level = 0
+    )
+
   if (!dir.exists(resultsPath))
-    dir.create(resultsPath)
+    dir.create(resultsPath, recursive = TRUE)
 
   if (!dir.exists(imgPath))
-    dir.create(imgPath)
+    dir.create(imgPath, recursive = TRUE)
 
-  qlog(sprintf("Start %s", name))
+  # Setting info
+  hr <- paste(rep("#", 80), collapse = "")
+  logging::loginfo("%s", hr)
+  logging::loginfo("RITAS settings for %s (see ?run_batch)", name)
+  logging::loginfo(
+    "df\t\tData frame with %d rows and %d columns (%s)",
+    nrow(df),
+    ncol(df),
+    paste(colnames(df), collapse = ", ")
+  )
+  logging::loginfo("proj4string\t%s", proj4string)
+  logging::loginfo("gridArgs\t%s", gridArgs)
+  logging::loginfo("predictArgs\t%s", list(predictArgs))
+  logging::loginfo("finallyFun\t%s", finallyFun)
+  logging::loginfo("colIdentity\t%s", colIdentity)
+  logging::loginfo("colWeight\t%s", colWeight)
+  logging::loginfo("colFun\t%s", colFun)
+  logging::loginfo("name\t\t%s", name)
+  logging::loginfo("resultsPath\t%s", resultsPath)
+  logging::loginfo("imgPath\t%s", imgPath)
+  logging::loginfo("logPath\t%s", logPath)
+  logging::loginfo("nCores\t%s", nCores)
+  logging::loginfo("filterOut\t%s", filterOut)
+  logging::loginfo("%s", hr)
 
-  qlog(sprintf("make_vehicle_polygons %s", name))
-  poly1Out <- file.path(resultsPath, sprintf("%s_vehicle.RDS", name))
+  logging::logdebug("Start RITAS for %s", name)
+
+  # Step 1: create rectangles from point data
+  logging::logdebug("make_vehicle_polygons %s", name)
+
+  poly1Out <-
+    file.path(resultsPath, sprintf("%s_001_vehicle.RDS", name))
   poly1    <- make_vehicle_polygons(df, proj4string)
   saveRDS(poly1, poly1Out)
 
   if (!is.null(filterOut)) {
-    qlog(sprintf("make_vehicle_polygons %s Filtering out %d polys", name, length(filterOut)))
-    poly1Out <- file.path(resultsPath, sprintf("%s_vehicle_filtered.RDS", name))
+    logging::logdebug(
+      "make_vehicle_polygons %s Filtering out %d polys",
+      name, length(filterOut)
+    )
+
+    poly1Out <-
+      file.path(resultsPath, sprintf("%s_001_vehicle_filtered.RDS", name))
     poly1    <- poly1[-filterOut, ]
     saveRDS(poly1, poly1Out)
   }
 
-  qlog(sprintf("reshape_polygons %s", name))
-  poly2Out <- file.path(resultsPath, sprintf("%s_reshaped.RDS", name))
+  # Step 2: clip polygons
+  logging::logdebug("reshape_polygons %s", name)
+
+  poly2Out <-
+    file.path(resultsPath, sprintf("%s_002_reshaped.RDS", name))
   poly2    <- reshape_polygons(poly1, verbose = TRUE)
   saveRDS(poly2, poly2Out)
 
   # Start parallelization
-  logOut   <- file.path(resultsPath, format(Sys.time(), "log_run_%Y%m%d_%H%M%S.txt"))
+  logOut   <- NULL
+  # No parallelization logs
+  #    file.path(basePath, format(Sys.time(), "log_run_%Y%m%d_%H%M%S.txt"))
+
+  logging::logdebug("Make cluster with %d cores for %s", nCores, name)
   cl       <- parallel::makeCluster(nCores, outfile = logOut)
+
   doParallel::registerDoParallel(cl)
   `%dopar%` <-
     if (nCores == 1) {
       foreach::`%do%`
     } else {
-      # foreach::`%do%`
       foreach::`%dopar%`
     }
 
   foreach::foreach(
     g         = gridArgs,
-    .packages = c("sp", "rgeos", "gstat"),
-    .export   = ls(.GlobalEnv)
+    .packages = c("sp", "rgeos", "gstat")
+#    .export   = c(proj4string), #ls(.GlobalEnv)
   ) %dopar% {
     key      <- paste(sprintf("%s%s_", names(g), unlist(g)), collapse = "")
-    qlog(sprintf("Start %s %s", name, key))
+    logging::logdebug("Start processing %s at grid resolution %s", name, key)
 
-    qlog(sprintf("make_grid %s %s", name, key))
-    grid1Out <- file.path(resultsPath, sprintf("%s_grid_%s.RDS", name, key))
+    # Step 3: create a grid
+    logging::logdebug("make_grid %s %s", name, key)
+
+    grid1Out <-
+      file.path(resultsPath, sprintf("%s_003_grid_%s.RDS", name, key))
     grid     <- do.call(make_grid, c(list(poly2), g))
     saveRDS(grid, grid1Out)
 
-    qlog(sprintf("chop_polygons %s %s", name, key))
-    poly3Out <- file.path(resultsPath, sprintf("%s_chopped_%s.RDS", name, key))
+    # Step 4: break polygons into smaller pieces
+    logging::logdebug("chop_polygons %s %s", name, key)
+
+    poly3Out <-
+      file.path(resultsPath, sprintf("%s_004_chopped_%s.RDS", name, key))
     poly3    <- chop_polygons(poly2, grid, colIdentity, colWeight)
     saveRDS(poly3, poly3Out)
 
-    qlog(sprintf("aggregate_polygons %s %s", name, key))
-    poly4Out <- file.path(resultsPath, sprintf("%s_aggregated_%s.RDS", name, key))
+    # Step 5: aggregate chopped polygons
+    logging::logdebug("aggregate_polygons %s %s", name, key)
+
+    poly4Out <-
+      file.path(resultsPath, sprintf("%s_005_aggregated_%s.RDS", name, key))
     poly4    <- aggregate_polygons(
       poly3,
       grid,
@@ -68,23 +195,22 @@ run_batch <- function(df, proj4string, gridArgs, predictArgs, finallyFun, colIde
       colNames = sprintf("%sW", colWeight),
       colFun   = colFun
     )
-
     poly4$logMassW   <- log(poly4$massW)
     poly4$logMassWUp <- log(poly4$massWUp)
-    poly4$yieldMgHa  <- yield_equation_mgha(poly4$massW, poly4$effectiveAreaW)
-
     saveRDS(poly4, poly4Out)
 
-    # Predict
-    qlog(sprintf("prepare_pred_locations %s %s", name, key))
+    # Step 6: smooth the aggregated polygons
+    logging::logdebug("prepare_pred_locations %s %s", name, key)
 
     predictArgsLocal <- predictArgs
-    if ("nmax" %in% names(predictArgsLocal) && predictArgsLocal$nmax < 1) # from % to # of neighbors
+    # from % to # of neighbors
+    if ("nmax" %in% names(predictArgsLocal) && predictArgsLocal$nmax < 1)
         predictArgsLocal$nmax <- round(nrow(poly4) * predictArgsLocal$nmax)
 
     # What to smooth
     predictArgsLocal$spdf <-
-      if (is.null(predictArgsLocal$spdf) || predictArgsLocal$spdf == "aggregated") {
+      if (is.null(predictArgsLocal$spdf) ||
+          predictArgsLocal$spdf == "aggregated") {
         # Smooth aggregated pixels
         poly4
       } else if (predictArgsLocal$spdf == "original") {
@@ -92,7 +218,6 @@ run_batch <- function(df, proj4string, gridArgs, predictArgs, finallyFun, colIde
         # Ugly hack
         poly1$effectiveArea  <- get_polygon_area_m2(poly1)
 
-        # colnames(poly1@data) <- paste(colnames(poly1@data), "W", sep = "")
         X <- poly1@data
         colnames(X) <- paste(colnames(X), "W", sep = "")
         poly1@data <- cbind(poly1@data, X)
@@ -108,14 +233,16 @@ run_batch <- function(df, proj4string, gridArgs, predictArgs, finallyFun, colIde
         # Use aggregated pixels
         poly4
       } else if (is.list(predictArgsLocal$spdfPred)) {
-        qlog(sprintf("create_pred_grid %s %s", name, key))
         # Construct grid
+        logging::logdebug("create_pred_grid %s %s", name, key)
+
         predGrid      <- do.call(
           make_grid, c(list(poly4), predictArgsLocal$spdfPred)
         )
 
-        qlog(sprintf("create_pred_covariates %s %s", name, key))
-        # Add attributes (if none, aggregate something that won't be used)
+        # Add attributes (if none given, aggregate something that won't be used)
+        logging::logdebug("create_pred_covariates %s %s", name, key)
+
         colNames      <- all.vars(predictArgsLocal$formula[-2])
         if (!length(colNames))
           colNames <- colnames(poly4@data)[1]
@@ -132,21 +259,22 @@ run_batch <- function(df, proj4string, gridArgs, predictArgs, finallyFun, colIde
 
         # Return only those pixels that overlay with the original sample
         predGrid[poly1, ]
-      } else if ("SpatialPolygonsDataFrame" %in% class(predictArgsLocal$spdfPred)) {
+      } else if ("SpatialPolygonsDataFrame" %in%
+                 class(predictArgsLocal$spdfPred)) {
         # Use given locations
         predictArgsLocal$spdfPred
       }
 
-    qlog(sprintf("smooth_polygons %s %s", name, key))
-    poly5Out <- file.path(resultsPath, sprintf("%s_smoothed_%s.RDS", name, key))
+    logging::logdebug("smooth_polygons %s %s", name, key)
+
+    poly5Out <-
+      file.path(resultsPath, sprintf("%s_006_smoothed_%s.RDS", name, key))
     poly5    <- do.call(
       smooth_polygons,
       predictArgsLocal
     )
 
-    # Transformations
-    qlog(sprintf("Transformations %s %s", name, key))
-
+    # Rename and add new values
     poly5$logMassKgMean <- poly5$var1.pred
     poly5$logMassKgVar  <- poly5$var1.var
 
@@ -162,14 +290,17 @@ run_batch <- function(df, proj4string, gridArgs, predictArgs, finallyFun, colIde
 
     saveRDS(poly5, poly5Out)
 
-    qlog(sprintf("finally %s %s", name, key))
-    if (is.function(finallyFun))
+    # Step 7: post-processing
+    if (is.function(finallyFun)) {
+      logging::logdebug("Run %s %s %s", as.character(substitute(finallyFun)), name, key)
       finallyFun(poly1, poly2, poly3, poly4, poly5, name, resultsPath, imgPath)
+    }
 
-    qlog(sprintf("Done with %s %s", name, key))
+    logging::logdebug("Done processing %s at grid resolution %s", name, key)
   } # End foreach
 
-  qlog(sprintf("Done with %s", name))
-
+  logging::logdebug("Stop cluster for %s", name)
   parallel::stopCluster(cl)
+
+  logging::logdebug("Done with RITAS for %s", name)
 }

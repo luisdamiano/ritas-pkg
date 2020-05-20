@@ -17,7 +17,9 @@ polygons to be covered by the grid.}
 
 \item{height}{The height of the grid polygons in meters.}
 
-\item{minArea}{A numeric between 0 and 1 indicating the minimum proportion of area overlay between polygons in `spdf` and a pixel. Grid pixels whose area do not cover the minimum in proportion will be dropped.}
+\item{minArea}{A numeric between 0 and 1 indicating the minimum proportion of
+area overlay between polygons in `spdf` and a pixel. Grid pixels whose area
+do not cover the minimum in proportion will be dropped.}
 
 \item{regular}{If TRUE (default), the union of all the elements in the grid
 will form a regular polygons. If FALSE, grid polygons not intercepting with
@@ -26,7 +28,7 @@ elements of of the grid having a regular shape!}
 }
 \value{
 A `\code{\link[sp]{SpatialPolygonsDataFrame}}` object with the
-polygons conforming the grid.
+  polygons conforming the grid.
 }
 \description{
 Note that `width` and `height` take priority over `n` if all are non-null.

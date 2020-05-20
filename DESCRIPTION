@@ -14,11 +14,9 @@ Depends:
 Imports:
     doParallel,
     foreach,
-    geosphere,
     gstat,
     rgeos,
     sp,
-    FRK,
-    png,
-    methods
+    ggplot2,
+    logging
 RoxygenNote: 6.1.1

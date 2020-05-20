@@ -11,19 +11,25 @@ aggregate_polygons(spdf, gridSpdf, by = NULL, minArea = 0, colNames,
 \item{spdf}{A `\code{\link[sp]{SpatialPolygonsDataFrame}}` object with the
 polygons to be cropped.}
 
-\item{gridSpdf}{A `\code{\link[sp]{SpatialPolygonsDataFrame}}` object with the
-grid as created by \code{\link{make_grid}}.}
+\item{gridSpdf}{A `\code{\link[sp]{SpatialPolygonsDataFrame}}` object with
+the grid as created by \code{\link{make_grid}}.}
 
-\item{by}{Character vector with the name of the columns used to group polygons.}
+\item{by}{Character vector with the name of the columns used to group
+polygons.}
 
-\item{minArea}{A numeric between 0 and 1 indicating the minimum proportion of area overlay between polygons in `spdf` and a pixel. Grid pixels whose area do not cover the minimum in proportion will be dropped.}
+\item{minArea}{A numeric between 0 and 1 indicating the minimum proportion of
+area overlay between polygons in `spdf` and a pixel. Grid pixels whose area
+do not cover the minimum in proportion will be dropped.}
 
-\item{colNames}{Character vector with the name of the columns that will be aggregated.}
+\item{colNames}{Character vector with the name of the columns that will be
+aggregated.}
 
-\item{colFun}{Function vector with the function that will be applied to each column.}
+\item{colFun}{Function vector with the function that will be applied to each
+column.}
 }
 \value{
-A `\code{\link[sp]{SpatialPolygonsDataFrame}}` object with the aggregated polygons.
+A `\code{\link[sp]{SpatialPolygonsDataFrame}}` object with the
+  aggregated polygons.
 }
 \description{
 Aggregate the attributes of the polygons grouped by some criteria.

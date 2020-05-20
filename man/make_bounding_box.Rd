@@ -11,11 +11,13 @@ make_bounding_box(x, y, w)
 
 \item{y}{A numeric vector with the longitude of the vehicle locations}
 
-\item{w}{A numeric vector with the width of the vehicle IN METERS. Again, `w` MUST BE IN METERS.}
+\item{w}{A numeric vector with the width of the vehicle IN METERS. Again, `w`
+MUST BE IN METERS.}
 }
 \value{
-A matrix with eight columns with the coordinates of the four vertices,
-where 11 and 12 represent the points closer to the initial location and 21 and 22 represent the pointers closer to the final location.
+A matrix with eight columns with the coordinates of the four
+  vertices, where 11 and 12 represent the points closer to the initial
+  location and 21 and 22 represent the pointers closer to the final location.
 }
 \description{
 Find the vertices of the polygon associated with a moving vehicle.
