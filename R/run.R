@@ -1,3 +1,20 @@
+#' Title
+#'
+#' @param df
+#' @param proj4string
+#' @param site
+#' @param year
+#' @param resolution Can be a single numeric or a vector `c(5, 3, 1)`
+#' @param nmax
+#' @param nCores
+#' @param filterOut
+#' @param predictAt
+#' @param folder
+#'
+#' @return
+#' @export
+#'
+#' @examples
 ritas <-
   function(df, proj4string, site = "unknrownSite", year = "unknownYear",
            resolution = 1, nmax = 1, nCores = 1, filterOut = NULL,
@@ -55,7 +72,7 @@ ritas <-
         formula  = log(massWUp) ~ 1,
         spdfPred = NULL,
         nmax     = nmax,
-        nCores   = 1,
+        nCores   = nCores,
         colIdentity =
           c("massW", "effectiveAreaW", "massWUp", "effectiveAreaWUp")
       ),
@@ -63,7 +80,7 @@ ritas <-
       resultsPath = file.path(basePath, "obj"),
       imgPath     = file.path(basePath, "img"),
       logPath     = basePath,
-      nCores      = nCores,
+      nCores      = 1,
       finallyFun  = NULL,
       # finallyFun  = make_maps,
       filterOut   = filterOut
