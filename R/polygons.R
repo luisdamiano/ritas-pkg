@@ -417,7 +417,7 @@ aggregate_polygons <-
   colnames(outDF) <- colNames
 
   # Add upscaled values
-  propUp <- get_polygon_area_m2(gridSpdf) / outDF$effectiveAreaW
+  propUp <- mean(get_polygon_area_m2(gridSpdf)) / outDF$effectiveAreaW
   propDF <- outDF * propUp
   colnames(propDF) <- sprintf("%sUp", colNames)
 
