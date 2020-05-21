@@ -33,7 +33,8 @@ lognormal_to_normal <- function(mean, var, what) {
 
 #' Return the nominal market moisture content of a crop.
 #'
-#' @param cropString A character string, or a vector of character strings, with the name of the crop. Use either "Corn" or "Soybeans".
+#' @param cropString A character string, or a vector of character strings, with
+#'   the name of the crop. Use either "Corn" or "Soybeans".
 #' @return The nominal market moisture content (% hundreds).
 #' @examples grain_market_moisture(c("Corn", "Soybeans"))
 grain_market_moisture <- function(cropString) {

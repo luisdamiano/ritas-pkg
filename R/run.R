@@ -179,7 +179,6 @@ run_batch <-
   foreach::foreach(
     g         = gridArgs,
     .packages = c("sp", "rgeos", "gstat")
-#    .export   = c(proj4string), #ls(.GlobalEnv)
   ) %dopar% {
     key      <- paste(sprintf("%s%s_", names(g), unlist(g)), collapse = "")
     logging::logdebug("Start processing %s at grid resolution %s", name, key)
@@ -285,7 +284,19 @@ run_batch <-
     logging::logdebug("smooth_polygons %s %s", name, key)
 
     poly5Out <-
-      file.path(resultsPath, sprintf("%s_006_smoothed_%s.RDS", name, key))
+      file.path(
+        resultsPath,
+        sprintf(
+          "%s_006_smoothed_%s_nmax%s.RDS",
+          name,
+          key,
+          ifelse(
+            "nmax" %in% names(predictArgs),
+            predictArgs$nmax,
+            "default"
+          )
+        )
+      )
     poly5    <- do.call(
       smooth_polygons,
       predictArgsLocal
