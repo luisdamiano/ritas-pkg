@@ -7,7 +7,8 @@
 grain_market_moisture(cropString)
 }
 \arguments{
-\item{cropString}{A character string, or a vector of character strings, with the name of the crop. Use either "Corn" or "Soybeans".}
+\item{cropString}{A character string, or a vector of character strings, with
+the name of the crop. Use either "Corn" or "Soybeans".}
 }
 \value{
 The nominal market moisture content (% hundreds).

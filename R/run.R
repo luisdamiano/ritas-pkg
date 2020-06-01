@@ -16,7 +16,7 @@
 #'
 #' @examples
 ritas <-
-  function(df, proj4string, site = "unknrownSite", year = "unknownYear",
+  function(df, proj4string, site = "unknownSite", year = "unknownYear",
            resolution = 1, nmax = 1, nCores = 1, filterOut = NULL,
            predictAt = NULL, folder = ".") {
     # Verify inputs
@@ -87,6 +87,9 @@ ritas <-
     )
   }
 
+# TODO Change function name to `run`
+# TODO Consider removing the outer loop and leave parallelization for smoothing
+#      only
 run_batch <-
   function(df, proj4string, gridArgs, predictArgs, finallyFun, colIdentity,
            colWeight, colFun, name, resultsPath, imgPath, logPath = NULL,
