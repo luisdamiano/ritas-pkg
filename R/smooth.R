@@ -42,7 +42,7 @@ smooth_polygons <- function(spdf, formula, spdfPred = NULL,
       gstat::krige(
         formula   = formula,
         locations = spdf,
-        newdata   = spdf,
+        newdata   = x,
         model     = fit,
         debug.level = -1,
         ...
