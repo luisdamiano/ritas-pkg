@@ -90,6 +90,7 @@ ritas <-
 # TODO Change function name to `run`
 # TODO Consider removing the outer loop and leave parallelization for smoothing
 #      only
+# TODO Allow running from a given step / cache do.calls
 run_batch <-
   function(df, proj4string, gridArgs, predictArgs, finallyFun, colIdentity,
            colWeight, colFun, name, resultsPath, imgPath, logPath = NULL,
@@ -98,7 +99,10 @@ run_batch <-
   if (!is.null(logPath))
     logging::addHandler(
       logging::writeToFile,
-      file = file.path(logPath, "log.txt"),
+      file = file.path(
+        logPath,
+        sprintf("log_%s.txt",format(Sys.time(), "%Y%m%d%H%M%S"))
+      ),
       level = 0
     )
 
