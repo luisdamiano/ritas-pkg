@@ -174,8 +174,9 @@ run_batch <-
 
   # Start parallelization
   logOut   <- NULL
-  # No parallelization logs
-  #    file.path(basePath, format(Sys.time(), "log_run_%Y%m%d_%H%M%S.txt"))
+
+  if (!is.na(parallel::detectCores()))
+    nCores <- min(nCores, parallel::detectCores())
 
   logging::logdebug("Make cluster with %d cores for %s", nCores, name)
   cl       <- parallel::makeCluster(nCores, outfile = logOut)
