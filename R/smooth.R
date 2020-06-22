@@ -28,6 +28,9 @@ smooth_polygons <- function(spdf, formula, spdfPred = NULL,
   spdfs <- sp::split(spdfPred, ind)
 
   # Start parallelization
+  if (!is.na(parallel::detectCores()))
+    nCores <- min(nCores, parallel::detectCores())
+
   cl <- parallel::makeCluster(nCores, outfile = "")
   doParallel::registerDoParallel(cl)
   `%dopar%` <-
