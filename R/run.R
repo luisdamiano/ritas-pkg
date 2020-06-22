@@ -148,14 +148,19 @@ run_batch <-
   saveRDS(poly1, poly1Out)
 
   if (!is.null(filterOut)) {
+    whichOut <- filterOut
+    if (inherits(filterOut, "function")) {
+      whichOut <- which(filterOut(poly1))
+    }
+
     logging::logdebug(
       "make_vehicle_polygons %s Filtering out %d polys",
-      name, length(filterOut)
+      name, length(whichOut)
     )
 
     poly1Out <-
       file.path(resultsPath, sprintf("%s_001_vehicle_filtered.RDS", name))
-    poly1    <- poly1[-filterOut, ]
+    poly1    <- poly1[-whichOut, ]
     saveRDS(poly1, poly1Out)
   }
 
