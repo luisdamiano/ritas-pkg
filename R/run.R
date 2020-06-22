@@ -91,6 +91,7 @@ ritas <-
 # TODO Consider removing the outer loop and leave parallelization for smoothing
 #      only
 # TODO Allow running from a given step / cache do.calls
+# TODO Remove outer loop after adding the cache feature
 run_batch <-
   function(df, proj4string, gridArgs, predictArgs, finallyFun, colIdentity,
            colWeight, colFun, name, resultsPath, imgPath, logPath = NULL,
@@ -113,6 +114,10 @@ run_batch <-
     dir.create(imgPath, recursive = TRUE)
 
   # Setting info
+  filterOutStr <- filterOut
+  if (is.function(filterOut))
+    filterOutStr <- body(filterOut)
+
   hr <- paste(rep("#", 80), collapse = "")
   logging::loginfo("%s", hr)
   logging::loginfo("RITAS settings for %s (see ?run_batch)", name)
