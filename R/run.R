@@ -134,7 +134,7 @@ run_batch <-
   logging::loginfo("imgPath\t%s", imgPath)
   logging::loginfo("logPath\t%s", logPath)
   logging::loginfo("nCores\t%s", nCores)
-  logging::loginfo("filterOut\t%s", filterOut)
+  logging::loginfo("filterOut\t%s", filterOutStr)
   logging::loginfo("%s", hr)
 
   logging::logdebug("Start RITAS for %s", name)
