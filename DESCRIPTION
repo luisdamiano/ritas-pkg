@@ -18,6 +18,5 @@ Imports:
     rgeos,
     sp,
     ggplot2,
-    logging,
-    rjson
+    logging
 RoxygenNote: 6.1.1
