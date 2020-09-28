@@ -116,11 +116,7 @@ run_batch <-
   # Write arguments to metadata
   cat(
     rjson::toJSON(
-      x      = list(
-        df, proj4string, gridArgs, predictArgs, finallyFun, colIdentity,
-        colWeight, colFun, name, resultsPath, imgPath, logPath,
-        nCores, filterOut
-      ),
+      x      = as.list(environment()),
       indent = 2
     ),
     file = file.path(resultsPath, "metadata.json")
