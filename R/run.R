@@ -113,6 +113,15 @@ run_batch <-
   if (!dir.exists(imgPath))
     dir.create(imgPath, recursive = TRUE)
 
+  # Write arguments to metadata
+  cat(
+    rjson::toJSON(
+      x      = as.list(environment()),
+      indent = 2
+    ),
+    file = file.path(resultsPath, "metadata.json")
+  )
+
   # Setting info
   filterOutStr <- filterOut
   if (is.function(filterOut))
