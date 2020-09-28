@@ -2,17 +2,15 @@
 
 #' Find the vertices of the polygon associated with a moving vehicle.
 #'
-#' @param x A numeric vector with the latitude of the vehicle locations in UTM.
-#' @param y A numeric vector with the longitude of the vehicle locations in UTM.
-#' @param w A numeric vector with the width of the vehicle in meters.
-#' @param d A numeric vector with the distance traveled by the vehicle in meters.
-#' It must have the same length as the other vectors (the first value can be
-#' a NA).
+#' @param x A numeric vector with the latitude of the vehicle locations.
+#' @param y A numeric vector with the longitude of the vehicle locations
+#' @param w A numeric vector with the width of the vehicle IN METERS. Again, `w`
+#'   MUST BE IN METERS.
 #' @return A matrix with eight columns with the coordinates of the four
 #'   vertices, where 11 and 12 represent the points closer to the initial
 #'   location and 21 and 22 represent the pointers closer to the final location.
 #' @note `w` MUST BE IN METERS.
-make_bounding_box <- function(x, y, w, d) {
+make_bounding_box <- function(x, y, w) {
   # Prepare centroids
   x0  <- c(NA, head(x, -1))
   x1  <- x
@@ -20,26 +18,18 @@ make_bounding_box <- function(x, y, w, d) {
   y1  <- y
 
   # Compute distance of the vertices to the centroid
-  h   <- 0.5 * w # half width
+  d   <- 0.5 * w # half width
   m   <- (y1 - y0) / (x1 - x0)
-  dx  <- h / sqrt(1 + 1/m^2)
+  dx  <- d / sqrt(1 + 1/m^2)
   dy  <- -dx / m
 
   # The slope of the perpendicular line doesn't exist when (y1 - y0) == 0
   # If it moved horizontally, the perpendicular line is vertical
   ind <- which(m == 0)
-  dy[ind] <- h[ind]
+  dy[ind] <- d[ind]
 
   # Note: No need to fix for (x1 - x0) == 0
   # If it moved vertically, the perpendicular line is horizontal
-
-  # Rescale the rectangle so that the diagonal has length d
-  D   <- sqrt((x1 - x0)^2 + (y1 - y0)^2)
-  d   <- ifelse(is.na(d), D, d)
-  r   <- d / D
-
-  x0  <- x0 + (1 - r) * (x1 - x0)
-  y0  <- y0 + (1 - r) * (y1 - y0)
 
   # Compute vertices
   x01 <- x0 - dx
@@ -62,12 +52,11 @@ make_bounding_box <- function(x, y, w, d) {
 #' as well as the swath width.
 #'
 #' @param df A data.frame with columns `x`, `y`, and `swath`. The latter
-#' represents the box width and must be in meters. Optionally, it can include
-#' the column `d` with the box diagonal length  in meters.
+#' represents the box width and must be in meters.
 #' @return A `\code{\link[sp]{SpatialPolygonsDataFrame}}` with one rectangle per
 #' row.
 #' @export
-#' @note `swath`, and `d` if given, MUST BE IN METERS.
+#' @note `swath` MUST BE IN METERS.
 make_vehicle_polygons <- function(df, proj4string) {
   # Verify inputs
   if (!is.data.frame(df))
@@ -75,9 +64,6 @@ make_vehicle_polygons <- function(df, proj4string) {
 
   if (!all(c("x", "y", "swath") %in% colnames(df)))
     stop("The input `x` must be a data.frame with columns `x`, `y`, and `swath`.")
-
-  if (!("d" %in% colnames(df)))
-    df$d <- NA
 
   tryCatch(
     expr  = sp::CRS(proj4string),
@@ -90,7 +76,7 @@ make_vehicle_polygons <- function(df, proj4string) {
 
   # Compute vertices of the rectangles for each coordinate
   boxes <- apply_ys(df, function(xi) {
-    make_bounding_box(xi$x, xi$y, xi$swath, xi$d)
+    make_bounding_box(xi$x, xi$y, xi$swath)
   }, by = c("site", "year"))
 
   # Create a list with one Polygon per bounding box
