@@ -70,7 +70,7 @@ ritas <-
       predictArgs = list(
         spdf     = NULL,
         formula  = log(massWUp) ~ 1,
-        spdfPred = NULL,
+        spdfPred = predictAt,
         nmax     = nmax,
         nCores   = nCores,
         colIdentity =
