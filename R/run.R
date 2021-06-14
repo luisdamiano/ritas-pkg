@@ -16,7 +16,7 @@
 #'
 #' @examples
 ritas <-
-  function(df, proj4string, site = "unknownSite", year = "unknownYear",
+  function(df, proj4string, group = NULL, site = "unknownSite", year = "unknownYear",
            resolution = 1, nmax = 1, nCores = 1, filterOut = NULL,
            predictAt = NULL, folder = ".") {
     # Verify inputs
@@ -61,6 +61,7 @@ ritas <-
     run_batch(
       df = df,
       proj4string = proj4string,
+      group    = group,
       gridArgs = lapply(resolution, function(r) {
         list(width = as.numeric(r), height = as.numeric(r), regular = FALSE)
       }),
@@ -93,7 +94,7 @@ ritas <-
 # TODO Allow running from a given step / cache do.calls
 # TODO Remove outer loop after adding the cache feature
 run_batch <-
-  function(df, proj4string, gridArgs, predictArgs, finallyFun, colIdentity,
+  function(df, proj4string, group, gridArgs, predictArgs, finallyFun, colIdentity,
            colWeight, colFun, name, resultsPath, imgPath, logPath = NULL,
            nCores, filterOut = NULL) {
   # Create directories if they don't exist
@@ -114,9 +115,13 @@ run_batch <-
     dir.create(imgPath, recursive = TRUE)
 
   # Setting info
+    groupStr <- group
+  if (is.function(group))
+    groupStr <- paste(deparse(group), collapse = "\n")
+
   filterOutStr <- filterOut
   if (is.function(filterOut))
-    filterOutStr <- body(filterOut)
+    filterOutStr <- paste(deparse(filterOut), collapse = "\n")
 
   hr <- paste(rep("#", 80), collapse = "")
   logging::loginfo("%s", hr)
@@ -128,6 +133,7 @@ run_batch <-
     paste(colnames(df), collapse = ", ")
   )
   logging::loginfo("proj4string\t%s", proj4string)
+  logging::loginfo("group\t%s", groupStr)
   logging::loginfo("gridArgs\t%s", gridArgs)
   logging::loginfo("predictArgs\t%s", list(predictArgs))
   logging::loginfo("finallyFun\t%s", finallyFun)
@@ -150,6 +156,30 @@ run_batch <-
   poly1Out <-
     file.path(resultsPath, sprintf("%s_001_vehicle.RDS", name))
   poly1    <- make_vehicle_polygons(df, proj4string)
+
+  if (!is.null(group)) {
+    byLs <- NULL
+    if (is.list(group) | is(by, "Spatial"))
+      byLs <- group
+
+    if (inherits(group, "function"))
+      byLs <- group(poly1)
+
+    if (!is.null(byLs)) {
+      f <- function(x) {
+        if (is.numeric(x)) return(sum(x))
+
+        paste(unique(as.character(x)), collapse = "/")
+      }
+
+      poly1$c <- 1
+      poly1   <- aggregate(poly1, by = byLs, FUN = f)
+
+      poly1$swath  <- poly1$swath / poly1$c
+      poly1$mass   <- poly1$mass  / poly1$c
+    }
+  }
+
   saveRDS(poly1, poly1Out)
 
   if (!is.null(filterOut)) {
