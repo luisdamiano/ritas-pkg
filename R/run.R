@@ -174,9 +174,7 @@ run_batch <-
 
       poly1$c <- 1
       poly1   <- aggregate(poly1, by = byLs, FUN = f)
-
       poly1$swath  <- poly1$swath / poly1$c
-      poly1$mass   <- poly1$mass  / poly1$c
     }
   }
 
