@@ -18,9 +18,10 @@
   if (useCache) {
     # Default cache filesystem
     cache <- function(f) {
+      path <- file.path(getwd(), ".cache")
       memoise::memoise(
         f     = f,
-        cache = memoise::cache_filesystem("./.cache")
+        cache = memoise::cache_filesystem(path)
       )
     }
 
