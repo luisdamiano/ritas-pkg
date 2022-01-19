@@ -4,8 +4,14 @@
 \alias{make_grid}
 \title{Create a grid covering the given polygons.}
 \usage{
-make_grid(spdf, n = NULL, width = NULL, height = NULL, minArea = 0,
-  regular = TRUE)
+make_grid(
+  spdf,
+  n = NULL,
+  width = NULL,
+  height = NULL,
+  minArea = 0,
+  regular = TRUE
+)
 }
 \arguments{
 \item{spdf}{A `\code{\link[sp]{SpatialPolygonsDataFrame}}` object with the

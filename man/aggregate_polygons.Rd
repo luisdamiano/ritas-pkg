@@ -4,8 +4,7 @@
 \alias{aggregate_polygons}
 \title{Aggregate the attributes of the polygons grouped by some criteria.}
 \usage{
-aggregate_polygons(spdf, gridSpdf, by = NULL, minArea = 0, colNames,
-  colFun)
+aggregate_polygons(spdf, gridSpdf, by = NULL, minArea = 0, colNames, colFun)
 }
 \arguments{
 \item{spdf}{A `\code{\link[sp]{SpatialPolygonsDataFrame}}` object with the

@@ -414,7 +414,7 @@ chop_polygons <- function(spdf, gridSpdf, colIdentity, colWeight, tol = 1E-8) {
 #'   column.
 #' @return A `\code{\link[sp]{SpatialPolygonsDataFrame}}` object with the
 #'   aggregated polygons.
-#' @export TODO: Add colUpscale as an argument
+#' @export
 aggregate_polygons <-
   function(spdf, gridSpdf, by = NULL, minArea = 0, colNames, colFun) {
   # Check proportion range

@@ -4,15 +4,18 @@
 \alias{make_bounding_box}
 \title{Find the vertices of the polygon associated with a moving vehicle.}
 \usage{
-make_bounding_box(x, y, w)
+make_bounding_box(x, y, w, d)
 }
 \arguments{
-\item{x}{A numeric vector with the latitude of the vehicle locations.}
+\item{x}{A numeric vector with the latitude of the vehicle locations in UTM.}
 
-\item{y}{A numeric vector with the longitude of the vehicle locations}
+\item{y}{A numeric vector with the longitude of the vehicle locations in UTM.}
 
-\item{w}{A numeric vector with the width of the vehicle IN METERS. Again, `w`
-MUST BE IN METERS.}
+\item{w}{A numeric vector with the width of the vehicle in meters.}
+
+\item{d}{A numeric vector with the distance traveled by the vehicle in meters.
+It must have the same length as the other vectors (the first value can be
+a NA).}
 }
 \value{
 A matrix with eight columns with the coordinates of the four

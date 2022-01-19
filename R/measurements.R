@@ -17,7 +17,6 @@ yield_equation_mgha <- function(massKg, areaM2) {
 #' @param what A string with the name of the value to return. It can be `mean`,
 #' `var`, or `median`.
 #' @return A numeric with the transformed value.
-#' @export
 lognormal_to_normal <- function(mean, var, what) {
   if (what == "mean")
     return(exp(mean + 0.5 * var))
@@ -36,7 +35,7 @@ lognormal_to_normal <- function(mean, var, what) {
 #' @param cropString A character string, or a vector of character strings, with
 #'   the name of the crop. Use either "Corn" or "Soybeans".
 #' @return The nominal market moisture content (% hundreds).
-#' @examples grain_market_moisture(c("Corn", "Soybeans"))
+##' @examples grain_market_moisture(c("Corn", "Soybeans"))
 grain_market_moisture <- function(cropString) {
   sapply(
     as.character(cropString),

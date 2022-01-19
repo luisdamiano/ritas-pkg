@@ -8,7 +8,8 @@ make_vehicle_polygons(df, proj4string)
 }
 \arguments{
 \item{df}{A data.frame with columns `x`, `y`, and `swath`. The latter
-represents the box width and must be in meters.}
+represents the box width and must be in meters. Optionally, it can include
+the column `d` with the box diagonal length  in meters.}
 }
 \value{
 A `\code{\link[sp]{SpatialPolygonsDataFrame}}` with one rectangle per
@@ -21,5 +22,5 @@ data.frame, a rectangle is constructed using the current and next positions
 as well as the swath width.
 }
 \note{
-`swath` MUST BE IN METERS.
+`swath`, and `d` if given, MUST BE IN METERS.
 }

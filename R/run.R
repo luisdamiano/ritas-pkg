@@ -13,8 +13,6 @@
 #'
 #' @return
 #' @export
-#'
-#' @examples
 ritas <-
   function(df, proj4string, group = NULL, site = "unknownSite", year = "unknownYear",
            resolution = 1, nmax = 1, nCores = 1, filterOut = NULL,
@@ -26,8 +24,8 @@ ritas <-
     if (!all(c("x", "y", "swath", "mass") %in% colnames(df)))
       stop("The `df` data frame must have columns `x`, `y`, `swath`, and `mass`")
 
-    if (!grep(glob2rx("*utm*"), tolower(proj4string)))
-      stop("Coordinates should be in UTM format")
+    # if (!grep(glob2rx("*utm*"), tolower(proj4string)))
+    #   stop("Coordinates should be in UTM format")
 
     # Autocomplete site and year if not present
     if (!("site" %in% colnames(df))) {

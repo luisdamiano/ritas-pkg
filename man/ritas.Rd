@@ -4,14 +4,27 @@
 \alias{ritas}
 \title{Title}
 \usage{
-ritas(df, proj4string, site = "unknownSite", year = "unknownYear",
-  resolution = 1, nmax = 1, nCores = 1, filterOut = NULL,
-  predictAt = NULL, folder = ".")
+ritas(
+  df,
+  proj4string,
+  group = NULL,
+  site = "unknownSite",
+  year = "unknownYear",
+  resolution = 1,
+  nmax = 1,
+  nCores = 1,
+  filterOut = NULL,
+  predictAt = NULL,
+  folder = "."
+)
 }
 \arguments{
 \item{resolution}{Can be a single numeric or a vector `c(5, 3, 1)`}
 
 \item{folder}{}
+}
+\value{
+
 }
 \description{
 Title
