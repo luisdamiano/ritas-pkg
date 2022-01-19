@@ -1,22 +1,24 @@
-Package: yieldMaps
+Package: ritas
 Type: Package
-Title: Title
+Title: RITAS: Smooth maps for overlapping, unequally-shaped, irregularly-sized, time-ordered, areal spatial units
 Version: 0.1.0
 Authors@R: c(person("Luis", "Damiano", email = "ldamiano@iastate.edu", role = c("aut", "cre", "cph"), comment = c(ORCID = "0000-0001-9107-0706")),
-  person("Jarad", "Niemi", email = "niemi@iastate.edu", role = c("aut")))
-Description: Description.
+  person("Jarad", "Niemi", email = "niemi@iastate.edu", role = c("aut"), comment = c(ORCID = "0000-0002-5079-158X")))
+Description: An implementation of .
 License: GPL (>=3)
-Copyright: (c) 2019
+Copyright: (c) 2019-2022
 Encoding: UTF-8
 LazyData: true
 Depends:
-    R (>= 3.5.0),
+  R (>= 3.5.0),
 Imports:
-    doParallel,
-    foreach,
-    gstat,
-    rgeos,
-    sp,
-    ggplot2,
-    logging
+  digest,
+  doParallel,
+  foreach,
+  gstat,
+  logging,
+  memoise,
+  parallel,
+  rgeos,
+  sp
 RoxygenNote: 6.1.1
